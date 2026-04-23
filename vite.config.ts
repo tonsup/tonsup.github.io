@@ -10,8 +10,17 @@ export default defineConfig({
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') }
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        // silence deprecation warnings coming from frappe-gantt's scss
+        silenceDeprecations: ['color-functions', 'global-builtin', 'import', 'legacy-js-api']
+      }
+    }
+  },
   build: {
     outDir: 'dist',
-    sourcemap: false
+    sourcemap: false,
+    chunkSizeWarningLimit: 1000
   }
 });
