@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+body { font-family: ui-sans-serif, system-ui, -apple-system, "Sarabun", "Noto Sans Thai", sans-serif; }
+
+.card { @apply bg-white border border-slate-200 rounded-lg shadow-sm; }
+.btn { @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition; }
+.btn-primary { @apply btn bg-brand-600 text-white hover:bg-brand-700; }
+.btn-ghost { @apply btn bg-transparent text-slate-700 hover:bg-slate-100; }
+.btn-danger { @apply btn bg-red-600 text-white hover:bg-red-700; }
+.input { @apply w-full px-3 py-2 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm bg-white; }
+.label { @apply block text-xs font-semibold text-slate-600 mb-1; }
+.chip { @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium; }
+
+/* Kanban */
+.lane { @apply bg-slate-100 rounded-lg p-2 flex flex-col gap-2 min-w-[260px] max-w-[300px] w-[280px]; }
+.card-task { @apply bg-white rounded-md shadow-sm border border-slate-200 p-2 text-sm cursor-grab active:cursor-grabbing; }
+.card-task.dragging { @apply opacity-40; }
