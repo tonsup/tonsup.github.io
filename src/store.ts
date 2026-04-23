@@ -102,9 +102,15 @@ export const useStore = create<AppState>((set, get) => ({
   saveProject: async (pdb) => {
     const { db } = get();
     if (!db) return;
-    await db.saveProject(pdb);
-    const projectsIndex = await db.listProjects();
-    set({ activeProject: pdb, projectsIndex });
+    set({ loading: true, error: null });
+    try {
+      await db.saveProject(pdb);
+      const projectsIndex = await db.listProjects();
+      set({ activeProject: pdb, projectsIndex, loading: false });
+    } catch (e: any) {
+      set({ loading: false, error: `Save failed: ${e?.message ?? String(e)}` });
+      throw e;
+    }
   },
 
   upsertUser: async (u) => {

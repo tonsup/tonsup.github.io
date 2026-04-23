@@ -25,6 +25,7 @@ export default function Kanban() {
   const [addingLane, setAddingLane] = useState(false);
   const [newLaneName, setNewLaneName] = useState('');
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [isNewTask, setIsNewTask] = useState(false);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
@@ -140,15 +141,13 @@ export default function Kanban() {
   }
 
   async function addTask(laneId: string) {
-    const title = prompt('Task title?');
-    if (!title) return;
     const now = new Date().toISOString();
     const nextKey = `${p.project.key}-${p.tasks.length + 1}`;
-    const task: Task = {
+    const draft: Task = {
       id: nanoid(10),
       projectId: p.project.id,
       key: nextKey,
-      title,
+      title: '',
       laneId,
       assigneeIds: [],
       storyPoints: 0,
@@ -156,12 +155,25 @@ export default function Kanban() {
       createdAt: now,
       updatedAt: now
     };
-    await persist({ ...p, tasks: [...p.tasks, task] });
+    // Open modal in "new" mode — persist only on Save
+    setEditingTask(draft);
+    setIsNewTask(true);
   }
 
   async function saveTask(updated: Task) {
-    const next = { ...p, tasks: p.tasks.map((t) => (t.id === updated.id ? { ...updated, updatedAt: new Date().toISOString() } : t)) };
+    if (!updated.title.trim()) {
+      alert('Title is required');
+      return;
+    }
+    const now = new Date().toISOString();
+    let next: ProjectDB;
+    if (isNewTask) {
+      next = { ...p, tasks: [...p.tasks, { ...updated, updatedAt: now }] };
+    } else {
+      next = { ...p, tasks: p.tasks.map((t) => (t.id === updated.id ? { ...updated, updatedAt: now } : t)) };
+    }
     setEditingTask(null);
+    setIsNewTask(false);
     await persist(next);
   }
 
@@ -169,6 +181,7 @@ export default function Kanban() {
     if (!confirm('Delete this task?')) return;
     await persist({ ...p, tasks: p.tasks.filter((t) => t.id !== id) });
     setEditingTask(null);
+    setIsNewTask(false);
   }
 
   return (
@@ -213,7 +226,8 @@ export default function Kanban() {
         <TaskEditor
           task={editingTask}
           lanes={sortedLanes}
-          onClose={() => setEditingTask(null)}
+          isNew={isNewTask}
+          onClose={() => { setEditingTask(null); setIsNewTask(false); }}
           onSave={saveTask}
           onDelete={() => deleteTask(editingTask.id)}
         />
@@ -315,17 +329,17 @@ function TaskCard({ task, dragging }: { task: Task; dragging?: boolean }) {
   );
 }
 
-function TaskEditor({ task, lanes, onClose, onSave, onDelete }: { task: Task; lanes: Swimlane[]; onClose: () => void; onSave: (t: Task) => void; onDelete: () => void }) {
+function TaskEditor({ task, lanes, isNew, onClose, onSave, onDelete }: { task: Task; lanes: Swimlane[]; isNew?: boolean; onClose: () => void; onSave: (t: Task) => void; onDelete: () => void }) {
   const [draft, setDraft] = useState<Task>(task);
   return (
     <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="card p-5 w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-3">
-          <h3 className="font-bold">{draft.key}</h3>
+          <h3 className="font-bold">{isNew ? 'New task' : draft.key}</h3>
           <button className="btn-ghost" onClick={onClose}>✕</button>
         </div>
         <label className="label">Title</label>
-        <input className="input mb-3" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
+        <input autoFocus className="input mb-3" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} onKeyDown={(e) => { if (e.key === 'Enter' && draft.title.trim()) onSave(draft); }} />
         <label className="label">Description</label>
         <textarea className="input mb-3 h-24" value={draft.description ?? ''} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
         <div className="grid grid-cols-3 gap-3">
