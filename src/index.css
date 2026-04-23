@@ -18,3 +18,17 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, "Sarabun", "Noto Sa
 .lane { @apply bg-slate-100 rounded-lg p-2 flex flex-col gap-2 min-w-[260px] max-w-[300px] w-[280px]; }
 .card-task { @apply bg-white rounded-md shadow-sm border border-slate-200 p-2 text-sm cursor-grab active:cursor-grabbing; }
 .card-task.dragging { @apply opacity-40; }
+
+/* Print / PDF — hide app chrome and render only report */
+@media print {
+  @page { size: A4; margin: 14mm; }
+  body { background: white !important; }
+  .no-print, aside, header.h-12 { display: none !important; }
+  main, .flex-1 { overflow: visible !important; }
+  .report-root { padding: 0 !important; }
+  .report { box-shadow: none !important; }
+  .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+  section { break-inside: avoid; }
+  table { font-size: 11px; }
+  .card { box-shadow: none !important; border: 1px solid #e2e8f0 !important; }
+}

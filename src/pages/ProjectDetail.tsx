@@ -10,6 +10,7 @@ import RiskRegister from './RiskRegister';
 import StakeholderRegister from './StakeholderRegister';
 import Resources from './Resources';
 import Financials from './Financials';
+import ProjectReport from './ProjectReport';
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
@@ -32,7 +33,8 @@ export default function ProjectDetail() {
     { to: `${base}/risks`, label: t('project.risks') },
     { to: `${base}/stakeholders`, label: t('project.stakeholders') },
     { to: `${base}/resources`, label: t('project.resources') },
-    { to: `${base}/financials`, label: t('project.financials') }
+    { to: `${base}/financials`, label: t('project.financials') },
+    { to: `${base}/report`, label: '📄 Report' }
   ];
 
   return (
@@ -65,6 +67,7 @@ export default function ProjectDetail() {
         <Route path="stakeholders" element={<StakeholderRegister />} />
         <Route path="resources" element={<Resources />} />
         <Route path="financials" element={<Financials />} />
+        <Route path="report" element={<ProjectReport />} />
       </Routes>
     </div>
   );
