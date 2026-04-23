@@ -103,10 +103,17 @@ export const useStore = create<AppState>((set, get) => ({
     const { db } = get();
     if (!db) return;
     set({ loading: true, error: null });
-    try {
+    // Serialize saves so concurrent calls never race on the same SHA.
+    const prev = (get() as any)._saveChain ?? Promise.resolve();
+    const next = prev.catch(() => {}).then(async () => {
       await db.saveProject(pdb);
       const projectsIndex = await db.listProjects();
-      set({ activeProject: pdb, projectsIndex, loading: false });
+      set({ activeProject: pdb, projectsIndex });
+    });
+    (set as any)({ _saveChain: next });
+    try {
+      await next;
+      set({ loading: false });
     } catch (e: any) {
       set({ loading: false, error: `Save failed: ${e?.message ?? String(e)}` });
       throw e;

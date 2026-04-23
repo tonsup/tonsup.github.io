@@ -68,8 +68,30 @@ export class GitHubClient {
       branch: this.branch
     };
     if (sha) body.sha = sha;
-    const r = await fetch(url, { method: 'PUT', headers: this.headers({ 'Content-Type': 'application/json' }), body: JSON.stringify(body) });
-    if (!r.ok) throw new GitHubApiError(`putJson ${path}`, r.status, await safeJson(r));
+    const doPut = async (useSha: string | undefined) => {
+      if (useSha) body.sha = useSha; else delete body.sha;
+      return fetch(url, { method: 'PUT', headers: this.headers({ 'Content-Type': 'application/json' }), body: JSON.stringify(body) });
+    };
+    let r = await doPut(sha);
+    // Retry once on stale-SHA conflict (409) or 422 "sha mismatch" by re-fetching fresh sha.
+    if (r.status === 409 || r.status === 422) {
+      const errBody = await safeJson(r);
+      const msg = ((errBody as any)?.message ?? '').toLowerCase();
+      const looksLikeSha = r.status === 409 || msg.includes('sha') || msg.includes('does not match') || msg.includes('conflict');
+      if (looksLikeSha) {
+        const existing = await fetch(`${url}?ref=${encodeURIComponent(this.branch)}`, { headers: this.headers() });
+        if (existing.ok) {
+          const j = await existing.json();
+          r = await doPut(j.sha as string);
+        }
+      } else {
+        throw new GitHubApiError(`putJson ${path} [${r.status}] ${(errBody as any)?.message ?? ''}`, r.status, errBody);
+      }
+    }
+    if (!r.ok) {
+      const errBody = await safeJson(r);
+      throw new GitHubApiError(`putJson ${path} [${r.status}] ${(errBody as any)?.message ?? ''}`, r.status, errBody);
+    }
     const json = await r.json();
     return { path, sha: json.content.sha, data };
   }
